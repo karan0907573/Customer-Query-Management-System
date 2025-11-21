@@ -50,6 +50,14 @@ padding-right:2rem !important;
     df = get_queries()
     
     st.subheader("Client queries")
+    
+    if df.empty:
+        with st.container(horizontal_alignment="distribute",key='filter-container',horizontal=True,vertical_alignment='bottom'):
+            status_filter = st.selectbox("Filter by status", ["Open","Closed", "All"],key='filter-status',disabled=True,width=150)
+            close_btn=st.button('Close',disabled=True)
+        st.info("No queries found.")
+        return
+    
     with st.container(horizontal_alignment="distribute",key='filter-container',horizontal=True,vertical_alignment='bottom'):
         status_filter = st.selectbox("Filter by status", ["Open","Closed", "All"],key='filter-status',width=150)
         if status_filter == "All":
@@ -61,16 +69,18 @@ padding-right:2rem !important;
             st.session_state.selected_filter=status_filter
             st.session_state.close_query_btn=False
         if df_filtered.empty:
-            st.info("No queries found.")
-            return
-        close_btn=st.button('Close',disabled=not(st.session_state.close_query_btn))
-        if close_btn:
-            st.session_state.close_ticket_dialog=True
+            st.info("No queries found for selected filter.")
+        
+        # Only show Close button for Open or All status filters
+        if status_filter != "Closed":
+            close_btn=st.button('Close',disabled=not(st.session_state.close_query_btn))
+            if close_btn:
+                st.session_state.close_ticket_dialog=True
 
     if st.session_state.close_ticket_dialog:
         st.session_state.close_query_btn=False
         closeQuery(st.session_state.query_data)
-    else:
+    elif not df_filtered.empty:
         column_labels_map = {
         'query_id': 'Id',
         'mail_id': 'Email',
@@ -88,12 +98,20 @@ padding-right:2rem !important;
                 label=display_label
             )
         
-        st.dataframe(df_filtered, 
-                    column_config=config,
-                    width='stretch',
-                    on_select=callback,
-                    hide_index=True,
-                    selection_mode='single-row',
-                    key='dataframe')
+        # Only enable selection mode for Open or All status filters
+        if status_filter == "Closed":
+            st.dataframe(df_filtered, 
+                        column_config=config,
+                        width='stretch',
+                        hide_index=True,
+                        key='dataframe')
+        else:
+            st.dataframe(df_filtered, 
+                        column_config=config,
+                        width='stretch',
+                        on_select=callback,
+                        hide_index=True,
+                        selection_mode='single-row',
+                        key='dataframe')
             
 

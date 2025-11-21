@@ -41,46 +41,54 @@ padding-right:2rem !important;
             st.rerun()
     st.subheader("Your queries")
     df = get_queries_by_customer(st.session_state.user_id)
-    with st.container(horizontal_alignment="distribute",key='filter-container',horizontal=True,vertical_alignment='bottom'):
-        status_filter = st.selectbox("Filter by status", ["Open","Closed", "All"],key='filter-status',width=150)
-        if status_filter == "All":
-            df_filtered = df
-        else:
-            df_filtered = df[df['status'] == status_filter]
-        st.session_state.filtered_data=df_filtered
-        if st.session_state.selected_filter!=status_filter:
-            st.session_state.selected_filter=status_filter
-            st.session_state.close_query_btn=False
-        if df_filtered.empty:
-            st.info("No queries found.")
-            return
-        addbtn=st.button("➕ Add New Query")
-        if addbtn:
-            st.session_state.show_add_query_modal=True
-    column_labels_map = {
-        'query_id': 'Id',
-        'mail_id': 'Email',
-        'mobile_number': 'Mobile Number',
-        'query_heading': 'Title',
-        'query_description': 'Description',
-        'status': 'Status',
-        'query_created_date': 'Created Date',
-        'query_closed_date': 'Closed Date',
-        'user_id': 'User Name'
-    }
-    config = {}
-    for sql_key, display_label in column_labels_map.items():
-        config[sql_key] = st.column_config.Column(
-            label=display_label
-        )
+    
     if df.empty:
+        with st.container(horizontal_alignment="distribute",key='filter-container',horizontal=True,vertical_alignment='bottom'):
+            status_filter = st.selectbox("Filter by status", ["Open","Closed", "All"],key='filter-status',disabled=True,width=150)
+            if st.button("➕ Add New Query"):
+                st.session_state.show_add_query_modal=True
         st.info("No queries found.")
+        
     else:
-         st.dataframe(df_filtered, 
-                    column_config=config,
-                    width='stretch',
-                    hide_index=True,
-                    key='dataframe')
+        with st.container(horizontal_alignment="distribute",key='filter-container',horizontal=True,vertical_alignment='bottom'):
+            status_filter = st.selectbox("Filter by status", ["Open","Closed", "All"],key='filter-status',width=150)
+            if status_filter == "All":
+                df_filtered = df
+            else:
+                df_filtered = df[df['status'] == status_filter]
+            st.session_state.filtered_data=df_filtered
+            if st.session_state.selected_filter!=status_filter:
+                st.session_state.selected_filter=status_filter
+                st.session_state.close_query_btn=False
+            if df_filtered.empty:
+                st.info("No queries found for selected filter.")
+            addbtn=st.button("➕ Add New Query")
+            if addbtn:
+                st.session_state.show_add_query_modal=True
+        
+        column_labels_map = {
+            'query_id': 'Id',
+            'mail_id': 'Email',
+            'mobile_number': 'Mobile Number',
+            'query_heading': 'Title',
+            'query_description': 'Description',
+            'status': 'Status',
+            'query_created_date': 'Created Date',
+            'query_closed_date': 'Closed Date',
+            'user_id': 'User Name'
+        }
+        config = {}
+        for sql_key, display_label in column_labels_map.items():
+            config[sql_key] = st.column_config.Column(
+                label=display_label
+            )
+        
+        if not df_filtered.empty:
+            st.dataframe(df_filtered, 
+                        column_config=config,
+                        width='stretch',
+                        hide_index=True,
+                        key='dataframe')
     if st.session_state.show_add_query_modal:
         createQuery()
     # if st.session_state['action_msg']:
